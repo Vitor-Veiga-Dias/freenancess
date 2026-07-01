@@ -2,6 +2,13 @@
   "name": "freenances",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "overrides": {
+    "@emnapi/core": "1.11.1",
+    "@emnapi/runtime": "1.11.1"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
