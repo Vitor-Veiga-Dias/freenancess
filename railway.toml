@@ -1,9 +1,8 @@
 [build]
-buildCommand = "npm run build"
+buildCommand = "npm run build && npm run db:deploy"
 
 [deploy]
 startCommand = "node .next/standalone/server.js"
-preDeployCommand = ["npm run db:deploy"]
 healthcheckPath = "/api/health"
 healthcheckTimeout = 120
 restartPolicyType = "ON_FAILURE"

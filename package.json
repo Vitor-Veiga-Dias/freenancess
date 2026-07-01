@@ -16,7 +16,7 @@
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
-    "db:deploy": "prisma db push",
+    "db:deploy": "prisma db push --skip-generate --accept-data-loss",
     "db:studio": "prisma studio"
   },
   "dependencies": {
