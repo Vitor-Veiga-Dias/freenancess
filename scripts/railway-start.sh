@@ -1,13 +1,18 @@
 #!/bin/sh
-set -e
 
-if [ -z "$DATABASE_URL" ]; then
-  echo "ERROR: DATABASE_URL is not set"
-  exit 1
+echo "PORT=${PORT:-3000}"
+echo "HOSTNAME=${HOSTNAME:-0.0.0.0}"
+
+if [ -n "$DATABASE_URL" ]; then
+  echo "Applying database schema..."
+  if node ./node_modules/prisma/build/index.js db push --skip-generate --accept-data-loss; then
+    echo "Database schema applied."
+  else
+    echo "WARN: prisma db push failed — starting app anyway."
+  fi
+else
+  echo "WARN: DATABASE_URL not set — skipping db push."
 fi
-
-echo "Applying database schema..."
-./node_modules/.bin/prisma db push --skip-generate --accept-data-loss
 
 echo "Starting server..."
 exec node server.js
