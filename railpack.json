@@ -6,10 +6,12 @@
   },
   "steps": {
     "install": {
-      "commands": ["npm install"]
-    },
-    "build": {
-      "commands": ["npm run build"]
+      "commands": [
+        { "src": "package.json", "dest": "package.json" },
+        { "src": "package-lock.json", "dest": "package-lock.json" },
+        { "src": "prisma", "dest": "prisma" },
+        "npm install"
+      ]
     }
   },
   "deploy": {
