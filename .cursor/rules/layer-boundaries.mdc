@@ -1,0 +1,58 @@
+---
+description: Import rules and placement for domain, application, and infrastructure
+globs: src/**/*
+alwaysApply: false
+---
+
+# Layer Boundaries
+
+## domain/
+
+Pure TypeScript only. No React, Next.js, Prisma, or env vars.
+
+```typescript
+// ✅ domain/flows/types.ts
+export const MONEY_FLOW_TYPES = ["OBLIGATIONS", "RESERVES", ...] as const;
+export type MoneyFlowType = (typeof MONEY_FLOW_TYPES)[number];
+export function buildMoneyFlows(...) { ... }
+
+// ❌ domain — never do this
+import { prisma } from "@/infrastructure/db/prisma";
+```
+
+Use `const` arrays + derived types, domain errors as classes, pure functions for business rules.
+
+## application/
+
+Use cases orchestrate workflows. External services via **ports** in `application/ports/`.
+
+```typescript
+// ✅ application/ports/open-finance.ts
+export interface IOpenFinanceProvider { ... }
+
+// ✅ application/use-cases/sync-orchestrator.ts
+const provider = createOpenFinanceProvider(); // factory from infrastructure
+```
+
+Prefer extracting new orchestration into `application/use-cases/`. Existing pages may query Prisma directly for reads — when adding write flows or multi-step logic, use a use case.
+
+## infrastructure/
+
+Implements ports and wraps third-party SDKs. Only place for Prisma client, Better Auth config, Pluggy HTTP calls.
+
+```typescript
+// ✅ infrastructure/open-finance/pluggy/provider.ts
+export function createOpenFinanceProvider(): IOpenFinanceProvider {
+  return hasCredentials ? new PluggyOpenFinanceProvider() : new StubOpenFinanceProvider();
+}
+```
+
+Stub providers must work without API keys so local dev stays frictionless.
+
+## app/
+
+Thin composition layer. Server Components by default; `"use client"` only for interactivity.
+
+- Pages: `requireSession()` or inherit from `(app)/layout.tsx`
+- API routes: validate body with Zod, `getServerSession()` for auth
+- Authenticated pages: `export const dynamic = "force-dynamic"`

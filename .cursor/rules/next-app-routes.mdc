@@ -1,0 +1,50 @@
+---
+description: Next.js App Router pages, layouts, and API route handlers
+globs: src/app/**/*
+alwaysApply: false
+---
+
+# App Routes
+
+## Route groups
+
+| Group | Purpose |
+|-------|---------|
+| `(marketing)/` | Public landing |
+| `(auth)/` | Login, register — client forms + Better Auth client |
+| `(app)/` | Authenticated shell — `AppShell`, `ensureUserContexts` |
+| `api/` | Route handlers — JSON only |
+
+## Auth
+
+- Middleware checks `better-auth.session_token` cookie for protected paths
+- Server pages: `requireSession()` from `@/infrastructure/auth/session`
+- API routes: `getServerSession()` → 401 if missing
+- Client auth actions: `@/infrastructure/auth/client`
+
+## API handler pattern
+
+```typescript
+export async function POST(request: Request) {
+  const session = await getServerSession();
+  if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const parsed = bodySchema.safeParse(await request.json());
+  if (!parsed.success) return NextResponse.json({ error: "..." }, { status: 400 });
+
+  // delegate to use case or provider
+  return NextResponse.json({ ... });
+}
+```
+
+## Data fetching in pages
+
+Server Components fetch via Prisma in page-level functions (e.g. `getFeedData`). Map DB records to domain types before passing to UI (`toNarrativeFeedItem`, `buildMoneyFlows`).
+
+Filter by `ContextType` when the page is context-specific. Respect PF/PJ separation in queries.
+
+## Open Finance endpoints
+
+- `POST /api/open-finance/connect` — creates connect token; stub auto-creates demo connection
+- `GET /api/cron/sync` — triggers `syncAllConnections` (open in dev without `CRON_SECRET`)
+- `POST /api/webhooks/pluggy` — Pluggy events → `syncConnection`

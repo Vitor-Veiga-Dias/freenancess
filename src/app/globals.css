@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-base: #030403;
+  --bg-surface: rgb(5 8 5 / 72%);
+  --bg-elevated: rgb(8 12 8 / 58%);
+  --border-subtle: rgb(186 230 186 / 12%);
+  --text-primary: #d4f0d4;
+  --text-secondary: #8fbc8f;
+  --text-tertiary: #5a7a5a;
+  --text-on-accent: #030403;
+  --accent: #b8f0b8;
+  --accent-hover: #cce8cc;
+  --accent-secondary: #7ec87e;
+  --accent-secondary-hover: #96d896;
+  --danger: #f87171;
+}
+
+.dark {
+  --bg-base: #030403;
+  --bg-surface: rgb(5 8 5 / 72%);
+  --bg-elevated: rgb(8 12 8 / 58%);
+  --border-subtle: rgb(186 230 186 / 12%);
+  --text-primary: #d4f0d4;
+  --text-secondary: #8fbc8f;
+  --text-tertiary: #5a7a5a;
+  --text-on-accent: #030403;
+  --accent: #b8f0b8;
+  --accent-hover: #cce8cc;
+  --accent-secondary: #7ec87e;
+  --accent-secondary-hover: #96d896;
+  --danger: #f87171;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-base: var(--bg-base);
+  --color-surface: var(--bg-surface);
+  --color-elevated: var(--bg-elevated);
+  --color-subtle: var(--border-subtle);
+  --color-primary: var(--text-primary);
+  --color-secondary: var(--text-secondary);
+  --color-tertiary: var(--text-tertiary);
+  --color-on-accent: var(--text-on-accent);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-secondary: var(--accent-secondary);
+  --color-accent-secondary-hover: var(--accent-secondary-hover);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-mono: var(--font-inter), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-base);
+  background-image:
+    linear-gradient(
+      rgb(3 4 3 / 82%),
+      rgb(3 4 3 / 88%)
+    ),
+    url("/images/brand-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--text-primary);
 }

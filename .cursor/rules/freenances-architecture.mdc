@@ -1,0 +1,49 @@
+---
+description: Freenances core architecture, domain concepts, and layer map
+alwaysApply: true
+---
+
+# Freenances Architecture
+
+Personal + business finance app via Open Finance. Dual ledger (PF/PJ), money flows, narrative feed.
+
+## Layer map
+
+```
+src/
+├── domain/          Pure business rules (types, validators, pure functions)
+├── application/     Use cases + ports (interfaces for external services)
+├── infrastructure/  Adapters (Prisma, Better Auth, Pluggy)
+├── ui/              Design tokens, primitives, patterns
+└── app/             Next.js routes (pages, layouts, API handlers)
+```
+
+## Dependency direction
+
+```
+app → application, infrastructure, ui, domain
+application → domain, application/ports
+infrastructure → domain, application/ports
+ui → domain (display types only)
+domain → nothing external
+```
+
+Never import `infrastructure/` or `app/` from `domain/`. Never import Prisma or Next.js in `domain/`.
+
+## Domain concepts
+
+- **ContextType**: `PERSONAL` | `BUSINESS` — strict PF/PJ separation
+- **Money flows**: OBLIGATIONS → RESERVES → DISCRETIONARY → INVESTMENT
+- **Narrative feed**: human-readable `DomainEvent` items, not spreadsheet rows
+- **Open Finance**: `IOpenFinanceProvider` port; Pluggy live or stub without credentials
+
+## Conventions
+
+- Path alias: `@/` → `src/`
+- Branch: `feature/<kebab-case-english>`
+- Commit: `tipo: mensagem em pt-BR` (feat, fix, chore, docs, test)
+- README and file comments in English; UI copy may be English or pt-BR
+
+## Next.js
+
+Read `node_modules/next/dist/docs/` before writing Next.js code — this project uses Next.js 16 with breaking changes from older versions.

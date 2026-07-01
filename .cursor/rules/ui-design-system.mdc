@@ -1,0 +1,39 @@
+---
+description: UI tokens, primitives, patterns, and styling conventions
+globs: src/ui/**/*
+alwaysApply: false
+---
+
+# UI Design System
+
+## Hierarchy
+
+```
+ui/tokens/     cn(), colors — no components
+ui/primitives/ Button, Input, Card, Badge — atomic, variant-based
+ui/patterns/   AppShell, FlowBar, NarrativeCard — composed layouts
+```
+
+Patterns import primitives and tokens. Primitives never import patterns.
+
+## Styling
+
+- Tailwind CSS v4 with semantic tokens: `bg-base`, `text-primary`, `text-secondary`, `border-subtle`, `bg-accent`, `text-on-accent`
+- Use `cn()` from `@/ui/tokens/cn` for conditional classes
+- Brand palette in `@/ui/tokens/colors` — black + green primary, white + orange secondary
+- `font-mono tabular-nums` for currency amounts; `formatCurrency()` from `cn.ts`
+
+## Component rules
+
+- Functional components, extend native HTML attribute types
+- Variants as `Record<Variant, string>` maps — see `Button`
+- No Prisma, no fetch, no business logic — receive typed props from pages
+- Client components (`"use client"`) only when using hooks or event handlers
+
+## Patterns
+
+- **AppShell**: header, context switcher, mobile nav, logout
+- **FlowBar**: visualizes `MoneyFlow[]` with context accent (`personal` | `business`)
+- **NarrativeCard**: renders `NarrativeFeedItem` from domain
+
+When adding UI, check existing primitives before creating new ones. Match spacing (`space-y-8` sections, `rounded-lg`, `text-sm` labels).
