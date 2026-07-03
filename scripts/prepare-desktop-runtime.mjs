@@ -3,6 +3,7 @@ import {
   cpSync,
   existsSync,
   mkdirSync,
+  readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
@@ -96,6 +97,26 @@ function copyRuntimeAssets() {
   const envSource = join(rootDir, ".env");
   if (existsSync(envSource)) {
     cpSync(envSource, join(runtimeRoot, ".env"), { force: true });
+    writeFileSync(
+      join(runtimeRoot, ".env"),
+      [
+        readFileSync(join(runtimeRoot, ".env"), "utf8")
+          .split(/\r?\n/)
+          .filter(
+            (line) =>
+              line.trim() &&
+              !line.trim().startsWith("#") &&
+              !line.startsWith("SOURCE_") &&
+              !line.startsWith("TARGET_") &&
+              !line.startsWith("AIVEN_"),
+          )
+          .join("\n"),
+        'BETTER_AUTH_URL="http://127.0.0.1:3847"',
+        'NEXT_PUBLIC_APP_URL="http://127.0.0.1:3847"',
+        "",
+      ].join("\n"),
+      "utf8",
+    );
   }
 
   writeFileSync(

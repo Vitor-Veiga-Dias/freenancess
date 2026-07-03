@@ -42,39 +42,55 @@ Open Finance integration follows **Ports & Adapters**: the domain depends on `IO
 ### Prerequisites
 
 - Node.js 22+
-- [Aiven PostgreSQL](https://aiven.io/) service (connection string with `?sslmode=require`)
+- PostgreSQL on [Railway](https://railway.app/) (Postgres plugin in the same project)
 
 ### Setup
 
 ```bash
-# Install dependencies
 npm install
-
-# Copy environment variables and set DATABASE_URL to your Aiven Postgres URL
 cp .env.example .env
+```
 
+Set `DATABASE_URL` to the Railway Postgres **public** URL (Postgres service → **Connect** → **Public Network**).
+
+```bash
 npx prisma generate
 npx prisma db push
-
-# Start development server
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
-### Desktop app (same Aiven database)
+### Migrate data (Aiven → Railway Postgres)
 
-Web, desktop, and Railway production all use the same `DATABASE_URL` (Aiven). Desktop only changes the app URL/port (`3847`).
+**Option A — from your machine**
+
+1. In `.env`:
+
+   ```env
+   SOURCE_DATABASE_URL=postgres://...@aiven...?sslmode=require
+   TARGET_DATABASE_URL=postgresql://postgres:...@HOST.proxy.rlwy.net:PORT/railway
+   ```
+
+   Use the **resolved** public URL from Railway (not `${{...}}` templates).
+
+2. Run `npm run db:migrate`
+3. Set `DATABASE_URL` to the same Railway public URL for local dev.
+
+**Option B — inside Railway**
+
+1. On the **app service**, add temporarily: `SOURCE_DATABASE_URL=<aiven url>`
+2. Ensure `DATABASE_URL=${{Postgres.DATABASE_URL}}`
+3. Railway → app service → **Shell** → `npm run db:migrate`
+4. Remove `SOURCE_DATABASE_URL` after migration.
+
+### Desktop app (same Railway database)
+
+Web, desktop, and Railway production share `DATABASE_URL`. Desktop only changes the app URL/port (`3847`).
 
 ```bash
-# Optional: migrate legacy SQLite data into Aiven
-npm run db:migrate-aiven
-
-# Run desktop server
-npm run desktop:dev
-
-# Windows: open app-style window
-npm run desktop:start
+npm run desktop:bundle
+npm run desktop:prod
 ```
 
 See [desktop/README.md](desktop/README.md) for the Tauri native shell.
@@ -83,38 +99,41 @@ See [desktop/README.md](desktop/README.md) for the Tauri native shell.
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string (Aiven with `?sslmode=require`) |
-| `DATABASE_CONNECTION_LIMIT` | Max Prisma pool size per instance (default `3`; keep low on Aiven) |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_CONNECTION_LIMIT` | Prisma pool size per instance (default `3`; use `5` on Railway Postgres) |
 | `AUTH_SECRET` | Better Auth secret (`openssl rand -base64 32`) |
-| `BETTER_AUTH_SECRET` | Same value as `AUTH_SECRET` (Better Auth alias) |
-| `NEXT_PUBLIC_APP_URL` | Public app URL (e.g. `http://localhost:3000`) |
+| `BETTER_AUTH_SECRET` | Same value as `AUTH_SECRET` |
+| `NEXT_PUBLIC_APP_URL` | Public app URL |
 | `BETTER_AUTH_URL` | Auth callback base URL (same as public URL in production) |
 | `PLUGGY_CLIENT_ID` | Pluggy client ID (optional in dev) |
 | `PLUGGY_CLIENT_SECRET` | Pluggy client secret (optional in dev) |
 | `PLUGGY_WEBHOOK_SECRET` | Webhook signature validation |
 | `CRON_SECRET` | Bearer token for `/api/cron/sync` |
 
-Without Pluggy credentials, the app uses a **stub provider** that creates demo bank connections for local development.
+Without Pluggy credentials, the app uses a **stub provider** for local development.
 
-### Deploy on Railway (app on Railway, database on Aiven)
+### Deploy on Railway
 
-Do **not** add Railway Postgres. Use your existing Aiven connection string for `DATABASE_URL`. Railway only runs the Next.js app (Docker container).
+Two services: **Postgres plugin** + **Freenances app**.
 
-1. **Create a Railway project** and connect this repository.
-2. **Add service variables** (Settings → Variables):
+#### Postgres plugin
 
-   | Variable | Value |
-   |---|---|
-   | `DATABASE_URL` | Aiven connection string (`?sslmode=require`) |
-   | `DATABASE_CONNECTION_LIMIT` | `3` |
-   | `AUTH_SECRET` | Random secret (`openssl rand -base64 32`) |
-   | `BETTER_AUTH_SECRET` | Same as `AUTH_SECRET` |
-   | `NEXT_PUBLIC_APP_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
-   | `BETTER_AUTH_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
+Railway manages `POSTGRES_USER`, `DATABASE_URL`, etc. Do not copy these manually into the app.
 
-3. **Deploy** — on each deploy the app runs `prisma db push` against **Aiven**, then starts on Railway's `PORT`.
-4. **Health check** — `GET /api/health` verifies Aiven connectivity.
-5. **Custom domain** (optional) — update `NEXT_PUBLIC_APP_URL` and `BETTER_AUTH_URL` and redeploy.
+#### Freenances app service
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `DATABASE_CONNECTION_LIMIT` | `5` |
+| `AUTH_SECRET` | Random secret (`openssl rand -base64 32`) |
+| `BETTER_AUTH_SECRET` | Same as `AUTH_SECRET` |
+| `NEXT_PUBLIC_APP_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
+| `BETTER_AUTH_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
+
+Deploy uses `railway.toml` + `Dockerfile`. Each deploy runs `prisma db push` on Railway Postgres, then starts on Railway's `PORT`.
+
+Health check: `GET /api/health`.
 
 ## API routes
 
@@ -167,11 +186,12 @@ Do **not** add Railway Postgres. Use your existing Aiven connection string for `
 ## Scripts
 
 ```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm run start    # Production server
-npm run lint     # ESLint
-npx prisma studio  # Database GUI
+npm run dev          # Development server
+npm run build        # Production build
+npm run start        # Production server
+npm run db:migrate   # Copy data between databases (Aiven → Railway)
+npm run lint         # ESLint
+npx prisma studio    # Database GUI
 ```
 
 ## License

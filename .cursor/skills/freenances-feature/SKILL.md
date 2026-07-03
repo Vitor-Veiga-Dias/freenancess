@@ -62,7 +62,7 @@ If feature is PF or PJ specific:
 ## 8. Verify locally
 
 ```bash
-npx prisma db push            # if schema changed (applies to Aiven)
+npx prisma db push            # if schema changed (Railway Postgres)
 npm run dev
 ```
 
