@@ -1,4 +1,13 @@
+import type { ManualEntryFields } from "@/domain/entries/types";
 import type { TransactionType } from "@/domain/ledger/types";
+
+import {
+  formatMonthKey,
+  getMonthBounds,
+  matchesMonthKey,
+} from "./dates";
+
+export { formatMonthKey, getMonthBounds, matchesMonthKey } from "./dates";
 
 export const EXPENSE_CATEGORIES = [
   "housing",
@@ -22,7 +31,7 @@ export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number];
 export type IncomeCategory = (typeof INCOME_CATEGORIES)[number];
 export type EntryCategory = ExpenseCategory | IncomeCategory;
 
-export interface ManualEntryEntity {
+export interface ManualEntryEntity extends ManualEntryFields {
   id: string;
   userId: string;
   contextId: string;
@@ -31,6 +40,7 @@ export interface ManualEntryEntity {
   amount: number;
   description: string;
   postedAt: Date;
+  fundedByIncomeCategory: IncomeCategory | null;
 }
 
 export interface CategoryAggregate {
@@ -42,10 +52,70 @@ export interface CategoryAggregate {
 export interface MonthlySummary {
   totalExpenses: number;
   totalIncome: number;
+  investmentTotal: number;
   balance: number;
   expensesByCategory: CategoryAggregate[];
   incomeByCategory: CategoryAggregate[];
+  transactionCount: number;
 }
+
+export const INVESTMENT_INCOME_CATEGORY: IncomeCategory = "investment_income";
+
+export const FUNDING_INCOME_CATEGORIES = [
+  "salary",
+  "freelance",
+  "other_income",
+] as const;
+
+export type FundingIncomeCategory = (typeof FUNDING_INCOME_CATEGORIES)[number];
+
+export function isFundingIncomeCategory(
+  category: string,
+): category is FundingIncomeCategory {
+  return FUNDING_INCOME_CATEGORIES.includes(category as FundingIncomeCategory);
+}
+
+export function isFundedInvestmentEntry(
+  entry: Pick<ManualEntryEntity, "type" | "category"> & {
+    fundedByIncomeCategory?: IncomeCategory | null;
+  },
+): boolean {
+  return (
+    entry.type === "CREDIT" &&
+    entry.category === INVESTMENT_INCOME_CATEGORY &&
+    entry.fundedByIncomeCategory != null &&
+    isFundingIncomeCategory(entry.fundedByIncomeCategory)
+  );
+}
+
+export function getInvestmentIncome(summary: MonthlySummary): number {
+  return summary.investmentTotal;
+}
+
+export function getOperatingBalance(summary: MonthlySummary): number {
+  return summary.totalIncome - getInvestmentIncome(summary) - summary.totalExpenses;
+}
+
+export interface MonthlyTrendPoint {
+  month: string;
+  totalExpenses: number;
+  totalIncome: number;
+  balance: number;
+}
+
+export interface UnifiedSummaryEntry {
+  type: TransactionType;
+  category: EntryCategory;
+  amount: number;
+  description: string;
+  source: "manual" | "bank";
+  fundedByIncomeCategory: IncomeCategory | null;
+}
+
+type SummaryEntryInput = Pick<
+  ManualEntryEntity,
+  "type" | "category" | "amount" | "fundedByIncomeCategory"
+>;
 
 export function getCategoriesForType(type: TransactionType): EntryCategory[] {
   return type === "DEBIT"
@@ -70,15 +140,22 @@ export function aggregateByCategory(
 ): CategoryAggregate[] {
   const filtered = entries.filter((entry) => entry.type === type);
   const total = filtered.reduce((sum, entry) => sum + entry.amount, 0);
+  const categories =
+    type === "DEBIT" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   const totals = new Map<string, number>();
 
   for (const entry of filtered) {
-    totals.set(entry.category, (totals.get(entry.category) ?? 0) + entry.amount);
+    const categoryKey = isValidCategory(type, entry.category)
+      ? entry.category
+      : type === "DEBIT"
+        ? "other_expense"
+        : "other_income";
+    totals.set(
+      categoryKey,
+      (totals.get(categoryKey) ?? 0) + entry.amount,
+    );
   }
-
-  const categories =
-    type === "DEBIT" ? EXPENSE_CATEGORIES : INCOME_CATEGORIES;
 
   return categories
     .map((category) => ({
@@ -91,36 +168,74 @@ export function aggregateByCategory(
 }
 
 export function buildMonthlySummary(
-  entries: Pick<ManualEntryEntity, "type" | "category" | "amount">[],
+  entries: SummaryEntryInput[],
 ): MonthlySummary {
   const totalExpenses = entries
     .filter((entry) => entry.type === "DEBIT")
     .reduce((sum, entry) => sum + entry.amount, 0);
 
-  const totalIncome = entries
-    .filter((entry) => entry.type === "CREDIT")
+  const incomeEntries = entries.filter((entry) => entry.type === "CREDIT");
+  const countableIncomeEntries = incomeEntries.filter(
+    (entry) => !isFundedInvestmentEntry(entry),
+  );
+
+  const totalIncome = countableIncomeEntries.reduce(
+    (sum, entry) => sum + entry.amount,
+    0,
+  );
+
+  const investmentTotal = incomeEntries
+    .filter((entry) => entry.category === INVESTMENT_INCOME_CATEGORY)
     .reduce((sum, entry) => sum + entry.amount, 0);
 
   return {
     totalExpenses,
     totalIncome,
+    investmentTotal,
     balance: totalIncome - totalExpenses,
     expensesByCategory: aggregateByCategory(entries, "DEBIT"),
-    incomeByCategory: aggregateByCategory(entries, "CREDIT"),
+    incomeByCategory: aggregateByCategory(countableIncomeEntries, "CREDIT"),
+    transactionCount: entries.length,
   };
 }
 
-export function getMonthBounds(month: string): { start: Date; end: Date } {
-  const [year, monthIndex] = month.split("-").map(Number);
-  const start = new Date(Date.UTC(year, monthIndex - 1, 1));
-  const end = new Date(Date.UTC(year, monthIndex, 1));
-
-  return { start, end };
+export function buildUnifiedMonthlySummary(
+  entries: UnifiedSummaryEntry[],
+): MonthlySummary {
+  return buildMonthlySummary(entries);
 }
 
-export function formatMonthKey(date: Date): string {
-  const year = date.getUTCFullYear();
-  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+export function buildMonthlyTrend(
+  entriesByMonth: Map<string, UnifiedSummaryEntry[]>,
+  months: string[],
+): MonthlyTrendPoint[] {
+  return months.map((month) => {
+    const entries = entriesByMonth.get(month) ?? [];
+    const summary = buildMonthlySummary(entries);
 
-  return `${year}-${month}`;
+    return {
+      month,
+      totalExpenses: summary.totalExpenses,
+      totalIncome: summary.totalIncome,
+      balance: summary.balance,
+    };
+  });
+}
+
+export function findTopExpenseCategory(
+  summary: MonthlySummary,
+): CategoryAggregate | null {
+  if (summary.expensesByCategory.length === 0) return null;
+  return summary.expensesByCategory[0];
+}
+
+export function findLargestExpense(
+  entries: UnifiedSummaryEntry[],
+): UnifiedSummaryEntry | null {
+  const expenses = entries.filter((entry) => entry.type === "DEBIT");
+  if (expenses.length === 0) return null;
+
+  return expenses.reduce((max, entry) =>
+    entry.amount > max.amount ? entry : max,
+  );
 }

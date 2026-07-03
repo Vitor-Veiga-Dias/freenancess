@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
 
 import {
   deleteManualEntry,
@@ -9,14 +8,7 @@ import { isValidContextType } from "@/domain/context/types";
 import { roundMoney } from "@/domain/ledger/money-input";
 import { getServerSession } from "@/infrastructure/auth/session";
 
-const updateSchema = z.object({
-  contextType: z.string(),
-  type: z.enum(["CREDIT", "DEBIT"]),
-  category: z.string(),
-  amount: z.number().positive(),
-  description: z.string().min(1).max(200),
-  postedAt: z.string().optional(),
-});
+import { entryFieldsSchema, parseEntryFields } from "../schema";
 
 export async function PATCH(
   request: Request,
@@ -29,22 +21,17 @@ export async function PATCH(
   }
 
   const { id } = await params;
-  const parsed = updateSchema.safeParse(await request.json());
+  const parsed = entryFieldsSchema.safeParse(await request.json());
 
   if (!parsed.success || !isValidContextType(parsed.data.contextType)) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   try {
+    const fields = parseEntryFields(parsed.data);
     const entry = await updateManualEntry(session.user.id, id, {
-      contextType: parsed.data.contextType,
-      type: parsed.data.type,
-      category: parsed.data.category,
-      amount: roundMoney(parsed.data.amount),
-      description: parsed.data.description,
-      postedAt: parsed.data.postedAt
-        ? new Date(parsed.data.postedAt)
-        : new Date(),
+      ...fields,
+      amount: roundMoney(fields.amount),
     });
 
     return NextResponse.json({ entry });

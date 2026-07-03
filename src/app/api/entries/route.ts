@@ -9,14 +9,7 @@ import { isValidContextType } from "@/domain/context/types";
 import { roundMoney } from "@/domain/ledger/money-input";
 import { getServerSession } from "@/infrastructure/auth/session";
 
-const createSchema = z.object({
-  contextType: z.string(),
-  type: z.enum(["CREDIT", "DEBIT"]),
-  category: z.string(),
-  amount: z.number().positive(),
-  description: z.string().min(1).max(200),
-  postedAt: z.string().optional(),
-});
+import { entryFieldsSchema, parseEntryFields } from "./schema";
 
 export async function GET(request: Request) {
   const session = await getServerSession();
@@ -27,19 +20,36 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const contextType = searchParams.get("contextType") ?? "PERSONAL";
-  const month = searchParams.get("month") ?? undefined;
 
   if (!isValidContextType(contextType)) {
     return NextResponse.json({ error: "Invalid context type" }, { status: 400 });
   }
 
-  const entries = await listManualEntries(
-    session.user.id,
-    contextType,
-    month,
-  );
+  const typeParam = searchParams.get("type");
+  const isRecurringParam = searchParams.get("isRecurring");
+  const pageParam = searchParams.get("page");
+  const limitParam = searchParams.get("limit");
+  const dateFromParam = searchParams.get("dateFrom");
+  const dateToParam = searchParams.get("dateTo");
 
-  return NextResponse.json({ entries });
+  const result = await listManualEntries(session.user.id, contextType, {
+    month: searchParams.get("month") ?? undefined,
+    type:
+      typeParam === "CREDIT" || typeParam === "DEBIT" ? typeParam : undefined,
+    category: searchParams.get("category") ?? undefined,
+    isRecurring:
+      isRecurringParam === "true"
+        ? true
+        : isRecurringParam === "false"
+          ? false
+          : undefined,
+    dateFrom: dateFromParam ? new Date(dateFromParam) : undefined,
+    dateTo: dateToParam ? new Date(dateToParam) : undefined,
+    page: pageParam ? Number(pageParam) : undefined,
+    limit: limitParam ? Number(limitParam) : undefined,
+  });
+
+  return NextResponse.json(result);
 }
 
 export async function POST(request: Request) {
@@ -49,22 +59,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const parsed = createSchema.safeParse(await request.json());
+  const parsed = entryFieldsSchema.safeParse(await request.json());
 
   if (!parsed.success || !isValidContextType(parsed.data.contextType)) {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
 
   try {
+    const fields = parseEntryFields(parsed.data);
     const entry = await createManualEntry(session.user.id, {
-      contextType: parsed.data.contextType,
-      type: parsed.data.type,
-      category: parsed.data.category,
-      amount: roundMoney(parsed.data.amount),
-      description: parsed.data.description,
-      postedAt: parsed.data.postedAt
-        ? new Date(parsed.data.postedAt)
-        : new Date(),
+      ...fields,
+      amount: roundMoney(fields.amount),
     });
 
     return NextResponse.json({ entry }, { status: 201 });

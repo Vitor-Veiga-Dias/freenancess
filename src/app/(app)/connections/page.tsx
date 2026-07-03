@@ -1,3 +1,4 @@
+import { formatConnectionScopes } from "@/domain/consent/scopes";
 import { isConsentExpiringSoon } from "@/domain/consent/types";
 import { requireSession } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/db/prisma";
@@ -6,6 +7,7 @@ import { getDictionary } from "@/i18n/get-dictionary";
 import { getContextPreference, getLocale } from "@/i18n/locale";
 import { ConnectBankTrigger } from "@/ui/patterns/connect-bank-trigger";
 import { PageHeader } from "@/ui/patterns/page-header";
+import { RevokeConnectionButton } from "@/ui/patterns/revoke-connection-button";
 import { Badge } from "@/ui/primitives/badge";
 import { Card } from "@/ui/primitives/card";
 
@@ -67,7 +69,8 @@ export default async function ConnectionsPage() {
                     </p>
                     <p className="text-xs text-tertiary">
                       {contextLabel} ·{" "}
-                      {connection.scopes.join(", ") || t.connections.scopes}
+                      {formatConnectionScopes(connection.scopes) ||
+                        t.connections.scopes}
                     </p>
                   </div>
                   <Badge variant={statusVariant(connection.status)}>
@@ -89,6 +92,9 @@ export default async function ConnectionsPage() {
                     {t.connections.lastSynced}{" "}
                     {connection.lastSyncedAt.toLocaleString(intlLocale)}
                   </p>
+                )}
+                {connection.status !== "REVOKED" && (
+                  <RevokeConnectionButton connectionId={connection.id} />
                 )}
               </Card>
             );

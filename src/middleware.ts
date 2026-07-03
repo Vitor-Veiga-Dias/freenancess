@@ -20,6 +20,9 @@ const protectedPrefixes = [
   "/business",
   "/api/open-finance",
   "/api/entries",
+  "/api/transactions",
+  "/api/budgets",
+  "/budgets",
 ];
 
 export async function middleware(request: NextRequest) {

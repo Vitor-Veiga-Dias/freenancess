@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
+import { connectionScopesToDb } from "@/domain/consent/scopes";
 import { findInstitution } from "@/domain/open-finance/institutions";
 import { isValidContextType } from "@/domain/context/types";
 import {
@@ -68,7 +69,7 @@ export async function POST(request: Request) {
         providerItemId,
         institutionName: institution.name,
         status: "CONNECTED",
-        scopes: ["accounts", "transactions"],
+        scopes: connectionScopesToDb(["accounts", "transactions"]),
         consentExpiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
       },
       update: {
