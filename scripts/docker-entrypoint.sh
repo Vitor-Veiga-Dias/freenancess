@@ -1,11 +1,13 @@
 #!/bin/sh
+set -e
 
-if [ -n "$DATABASE_URL" ]; then
-  echo "Applying database schema..."
-  prisma db push --skip-generate --accept-data-loss || echo "WARN: db push failed"
-else
-  echo "WARN: DATABASE_URL not set"
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERROR: DATABASE_URL is required"
+  exit 1
 fi
+
+echo "Applying database schema..."
+prisma db push --skip-generate --accept-data-loss
 
 echo "Starting server on port ${PORT:-3000}..."
 exec node server.js

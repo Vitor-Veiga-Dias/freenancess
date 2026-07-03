@@ -8,3 +8,8 @@ npm-debug.log*
 .DS_Store
 coverage
 .cursor
+desktop
+dist
+.ai
+*.md
+!README.md

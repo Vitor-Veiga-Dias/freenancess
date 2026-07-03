@@ -41,8 +41,8 @@ Open Finance integration follows **Ports & Adapters**: the domain depends on `IO
 
 ### Prerequisites
 
-- Node.js 20+
-- PostgreSQL database
+- Node.js 22+
+- [Aiven PostgreSQL](https://aiven.io/) service (connection string with `?sslmode=require`)
 
 ### Setup
 
@@ -50,10 +50,9 @@ Open Finance integration follows **Ports & Adapters**: the domain depends on `IO
 # Install dependencies
 npm install
 
-# Copy environment variables
+# Copy environment variables and set DATABASE_URL to your Aiven Postgres URL
 cp .env.example .env
 
-# Generate Prisma client and push schema
 npx prisma generate
 npx prisma db push
 
@@ -65,10 +64,10 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ### Desktop app (same Aiven database)
 
-Web and desktop share `DATABASE_URL` from `.env`. Desktop only changes the app URL/port (`3847`).
+Web, desktop, and Railway production all use the same `DATABASE_URL` (Aiven). Desktop only changes the app URL/port (`3847`).
 
 ```bash
-# Migrate local SQLite/Docker data into Aiven
+# Optional: migrate legacy SQLite data into Aiven
 npm run db:migrate-aiven
 
 # Run desktop server
@@ -84,15 +83,38 @@ See [desktop/README.md](desktop/README.md) for the Tauri native shell.
 
 | Variable | Description |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `DATABASE_URL` | PostgreSQL connection string (Aiven with `?sslmode=require`) |
+| `DATABASE_CONNECTION_LIMIT` | Max Prisma pool size per instance (default `3`; keep low on Aiven) |
 | `AUTH_SECRET` | Better Auth secret (`openssl rand -base64 32`) |
-| `NEXT_PUBLIC_APP_URL` | App URL (e.g. `http://localhost:3000`) |
+| `BETTER_AUTH_SECRET` | Same value as `AUTH_SECRET` (Better Auth alias) |
+| `NEXT_PUBLIC_APP_URL` | Public app URL (e.g. `http://localhost:3000`) |
+| `BETTER_AUTH_URL` | Auth callback base URL (same as public URL in production) |
 | `PLUGGY_CLIENT_ID` | Pluggy client ID (optional in dev) |
 | `PLUGGY_CLIENT_SECRET` | Pluggy client secret (optional in dev) |
 | `PLUGGY_WEBHOOK_SECRET` | Webhook signature validation |
 | `CRON_SECRET` | Bearer token for `/api/cron/sync` |
 
 Without Pluggy credentials, the app uses a **stub provider** that creates demo bank connections for local development.
+
+### Deploy on Railway (app on Railway, database on Aiven)
+
+Do **not** add Railway Postgres. Use your existing Aiven connection string for `DATABASE_URL`. Railway only runs the Next.js app (Docker container).
+
+1. **Create a Railway project** and connect this repository.
+2. **Add service variables** (Settings → Variables):
+
+   | Variable | Value |
+   |---|---|
+   | `DATABASE_URL` | Aiven connection string (`?sslmode=require`) |
+   | `DATABASE_CONNECTION_LIMIT` | `3` |
+   | `AUTH_SECRET` | Random secret (`openssl rand -base64 32`) |
+   | `BETTER_AUTH_SECRET` | Same as `AUTH_SECRET` |
+   | `NEXT_PUBLIC_APP_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
+   | `BETTER_AUTH_URL` | `https://${{RAILWAY_PUBLIC_DOMAIN}}` |
+
+3. **Deploy** — on each deploy the app runs `prisma db push` against **Aiven**, then starts on Railway's `PORT`.
+4. **Health check** — `GET /api/health` verifies Aiven connectivity.
+5. **Custom domain** (optional) — update `NEXT_PUBLIC_APP_URL` and `BETTER_AUTH_URL` and redeploy.
 
 ## API routes
 
