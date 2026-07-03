@@ -7,28 +7,19 @@ WORKDIR /app
 FROM base AS deps
 COPY package.json package-lock.json ./
 COPY prisma ./prisma/
-RUN npm install
+RUN npm ci
 
 FROM base AS builder
-ARG DATABASE_URL
 ARG NEXT_PUBLIC_APP_URL
 ARG BETTER_AUTH_URL
-ARG AUTH_SECRET
-ARG BETTER_AUTH_SECRET
-ENV DATABASE_URL=$DATABASE_URL
+ARG RAILWAY_PUBLIC_DOMAIN
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV BETTER_AUTH_URL=$BETTER_AUTH_URL
-ENV AUTH_SECRET=$AUTH_SECRET
-ENV BETTER_AUTH_SECRET=$BETTER_AUTH_SECRET
-ENV NEXT_TELEMETRY_DISABLED=1
+ENV RAILWAY_PUBLIC_DOMAIN=$RAILWAY_PUBLIC_DOMAIN
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
-RUN if [ -n "$DATABASE_URL" ]; then \
-      npx prisma db push --skip-generate --accept-data-loss; \
-    else \
-      echo "WARN: DATABASE_URL not set at build time — will retry at startup"; \
-    fi
 
 FROM base AS runner
 ENV NODE_ENV=production

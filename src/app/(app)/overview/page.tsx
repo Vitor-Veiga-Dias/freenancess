@@ -2,14 +2,28 @@ import { Suspense } from "react";
 
 import Link from "next/link";
 
-import { getMonthlySummary } from "@/application/use-cases/manual-entries";
-import { formatMonthKey } from "@/domain/categories/types";
+import { listBudgetsWithProgress } from "@/application/use-cases/category-budgets";
+import { buildCategoryChartItems } from "@/domain/budgets/chart-items";
+import {
+  getMonthlyTrend,
+  getUnifiedMonthlySummary,
+} from "@/application/use-cases/financial-summary";
+import {
+  findLargestExpense,
+  findTopExpenseCategory,
+  formatMonthKey,
+  getInvestmentIncome,
+  getOperatingBalance,
+} from "@/domain/categories/types";
 import { localeToIntl } from "@/i18n/config";
 import { getDictionary } from "@/i18n/get-dictionary";
+import { getCategoryLabel } from "@/i18n/category-labels";
 import { getContextPreference, getLocale } from "@/i18n/locale";
 import { requireSession } from "@/infrastructure/auth/session";
+import { CategoryExpenseChart } from "@/ui/patterns/category-expense-chart";
 import { CategoryBreakdown } from "@/ui/patterns/category-breakdown";
 import { MonthPicker } from "@/ui/patterns/month-picker";
+import { MonthlyTrend } from "@/ui/patterns/monthly-trend";
 import { PageHeader } from "@/ui/patterns/page-header";
 import { Button } from "@/ui/primitives/button";
 import { Card } from "@/ui/primitives/card";
@@ -28,14 +42,24 @@ async function OverviewContent({
   const t = getDictionary(locale);
   const intlLocale = localeToIntl(locale);
 
-  const summary = await getMonthlySummary(
-    session.user.id,
-    contextType,
-    month,
+  const [{ summary, entries }, trend, budgets] = await Promise.all([
+    getUnifiedMonthlySummary(session.user.id, contextType, month),
+    getMonthlyTrend(session.user.id, contextType, month),
+    listBudgetsWithProgress(session.user.id, contextType, month),
+  ]);
+
+  const investmentIncome = getInvestmentIncome(summary);
+  const operatingBalance = getOperatingBalance(summary);
+  const expenseChartItems = buildCategoryChartItems(
+    summary.expensesByCategory,
+    budgets,
   );
 
   const hasEntries =
     summary.totalExpenses > 0 || summary.totalIncome > 0;
+
+  const topCategory = findTopExpenseCategory(summary);
+  const largestExpense = findLargestExpense(entries);
 
   return (
     <>
@@ -48,7 +72,7 @@ async function OverviewContent({
         </Card>
       )}
 
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <Card className="space-y-1 p-4">
           <p className="text-xs uppercase tracking-widest text-secondary">
             {t.overview.totalExpenses}
@@ -70,22 +94,71 @@ async function OverviewContent({
             {t.overview.balance}
           </p>
           <p className="font-mono text-2xl tabular-nums text-primary">
-            {formatCurrency(summary.balance, "BRL", intlLocale)}
+            {formatCurrency(operatingBalance, "BRL", intlLocale)}
+          </p>
+        </Card>
+        <Card className="space-y-1 p-4">
+          <p className="text-xs uppercase tracking-widest text-secondary">
+            {t.overview.investments}
+          </p>
+          <p className="font-mono text-2xl tabular-nums text-accent-secondary">
+            {formatCurrency(investmentIncome, "BRL", intlLocale)}
+          </p>
+        </Card>
+        <Card className="space-y-1 p-4 sm:col-span-2 lg:col-span-1">
+          <p className="text-xs uppercase tracking-widest text-secondary">
+            {t.overview.transactionCount}
+          </p>
+          <p className="font-mono text-2xl tabular-nums text-primary">
+            {summary.transactionCount}
           </p>
         </Card>
       </div>
 
-      <section className="space-y-4">
-        <h2 className="text-xs font-medium uppercase tracking-widest text-secondary">
-          {t.overview.expensesByCategory}
-        </h2>
-        <CategoryBreakdown
-          items={summary.expensesByCategory}
-          t={t}
-          intlLocale={intlLocale}
-          emptyMessage={t.overview.emptyExpenses}
-        />
-      </section>
+      {(topCategory || largestExpense) && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          {topCategory && (
+            <Card className="space-y-1 p-4">
+              <p className="text-xs uppercase tracking-widest text-secondary">
+                {t.overview.topExpenseCategory}
+              </p>
+              <p className="text-sm font-medium text-primary">
+                {getCategoryLabel(t, topCategory.category)}
+              </p>
+              <p className="font-mono text-sm tabular-nums text-secondary">
+                {formatCurrency(topCategory.total, "BRL", intlLocale)}
+              </p>
+            </Card>
+          )}
+          {largestExpense && (
+            <Card className="space-y-1 p-4">
+              <p className="text-xs uppercase tracking-widest text-secondary">
+                {t.overview.topExpense}
+              </p>
+              <p className="text-sm font-medium text-primary">
+                {largestExpense.description}
+              </p>
+              <p className="font-mono text-sm tabular-nums text-secondary">
+                {formatCurrency(largestExpense.amount, "BRL", intlLocale)}
+                {" · "}
+                {largestExpense.source === "bank"
+                  ? t.overview.fromBank
+                  : t.overview.fromManual}
+              </p>
+            </Card>
+          )}
+        </div>
+      )}
+
+      <CategoryExpenseChart
+        items={expenseChartItems}
+        t={t}
+        intlLocale={intlLocale}
+        title={t.overview.expensesByCategory}
+        emptyMessage={t.overview.emptyExpenses}
+      />
+
+      <MonthlyTrend points={trend} t={t} intlLocale={intlLocale} />
 
       <section className="space-y-4">
         <h2 className="text-xs font-medium uppercase tracking-widest text-secondary">

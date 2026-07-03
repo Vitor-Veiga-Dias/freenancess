@@ -1,14 +1,16 @@
 "use client";
 
 import { useCallback, useState, useTransition } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Building2, LogOut } from "lucide-react";
+import { Building2, LogOut, Menu } from "lucide-react";
 
 import type { ContextType } from "@/domain/context/types";
 import { signOut } from "@/infrastructure/auth/client";
 import { useI18n } from "@/i18n/context";
-import { APP_NAV_ITEMS, getNavItemForPath } from "@/ui/patterns/app-nav";
+import { AppSidebarNav } from "@/ui/patterns/app-sidebar-nav";
+import { getNavItemForPath } from "@/ui/patterns/app-nav";
+import { BrandLogo } from "@/ui/patterns/brand-logo";
+import { Drawer } from "@/ui/patterns/drawer";
 import { ContextSwitcher } from "@/ui/patterns/context-switcher";
 import { LanguageSwitcher } from "@/ui/patterns/language-switcher";
 import { cn } from "@/ui/tokens/cn";
@@ -26,6 +28,7 @@ export function AppShell({
   const router = useRouter();
   const { t } = useI18n();
   const [context, setContext] = useState<ContextType>(initialContext);
+  const [navOpen, setNavOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   const currentNav = getNavItemForPath(pathname);
@@ -54,61 +57,34 @@ export function AppShell({
     <div className="flex min-h-screen flex-col bg-base text-primary md:flex-row">
       <aside className="hidden w-64 shrink-0 border-r border-subtle bg-base/50 backdrop-blur-md md:flex md:flex-col">
         <div className="flex h-14 items-center border-b border-subtle bg-base/60 px-5 backdrop-blur-md">
-          <Link href="/overview" className="text-sm font-semibold tracking-tight">
-            freenances
-          </Link>
+          <BrandLogo href="/overview" size="sm" />
         </div>
-
-        <nav className="flex-1 space-y-1 p-3">
-          {APP_NAV_ITEMS.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex flex-col gap-0.5 rounded-xl px-3 py-2.5 transition-colors",
-                  isActive
-                    ? "bg-elevated text-primary"
-                    : "text-secondary hover:bg-elevated/60 hover:text-primary",
-                )}
-              >
-                <span className="flex items-center gap-2 text-sm font-medium">
-                  <Icon className="h-4 w-4" strokeWidth={1.5} />
-                  {t.nav[item.labelKey]}
-                </span>
-                <span className="pl-6 text-xs text-tertiary">
-                  {t.nav[item.descriptionKey]}
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className="space-y-3 border-t border-subtle p-4">
-          <LanguageSwitcher className="w-full justify-center" />
-          <button
-            type="button"
-            onClick={() => signOut()}
-            className="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-secondary transition-colors hover:bg-elevated hover:text-primary"
-          >
-            <LogOut className="h-4 w-4" strokeWidth={1.5} />
-            {t.common.signOut}
-          </button>
-        </div>
+        <AppSidebarNav />
       </aside>
 
       <div className="flex min-h-screen flex-1 flex-col">
-        <header className="sticky top-0 z-10 border-b border-subtle bg-base/60 backdrop-blur-md">
-          <div className="flex h-14 items-center justify-between gap-3 px-4">
-            <Link
-              href="/overview"
-              className="text-sm font-semibold tracking-tight md:hidden"
+        <header className="sticky top-0 z-20 border-b border-subtle bg-base/60 backdrop-blur-md">
+          <div className="flex h-14 items-center gap-3 px-4">
+            <button
+              type="button"
+              onClick={() => setNavOpen(true)}
+              aria-label={t.common.menu}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-elevated text-primary transition-colors hover:bg-elevated/80 md:hidden"
             >
-              freenances
-            </Link>
+              <Menu className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+
+            <div className="flex min-w-0 flex-1 items-center justify-center md:justify-start">
+              <BrandLogo
+                href="/overview"
+                size="sm"
+                variant="round"
+                className="md:hidden"
+              />
+              <div className="hidden md:block">
+                <BrandLogo href="/overview" size="sm" />
+              </div>
+            </div>
 
             {currentNav && (
               <div className="hidden min-w-0 flex-1 md:block">
@@ -121,22 +97,48 @@ export function AppShell({
               </div>
             )}
 
-            <div className="flex items-center gap-2 md:ml-auto">
+            <div className="flex shrink-0 items-center gap-2 md:ml-auto">
               <LanguageSwitcher className="md:hidden" />
               <ContextSwitcher value={context} onChange={handleContextChange} />
-              <button
-                type="button"
-                onClick={() => signOut()}
-                className="text-secondary transition-colors hover:text-primary md:hidden"
-                aria-label={t.common.signOut}
-              >
-                <LogOut className="h-4 w-4" strokeWidth={1.5} />
-              </button>
             </div>
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 md:py-8">
+        <Drawer
+          open={navOpen}
+          onClose={() => setNavOpen(false)}
+          title={t.common.menu}
+          side="left"
+          closeLabel={t.common.close}
+        >
+          <div className="-mx-1 flex min-h-[70dvh] flex-col">
+            <div className="mb-5 flex justify-center">
+              <BrandLogo href="/overview" size="md" />
+            </div>
+            <AppSidebarNav
+              onNavigate={() => setNavOpen(false)}
+              showFooter={false}
+            />
+            <div className="mt-auto space-y-3 border-t border-subtle pt-4">
+              <LanguageSwitcher className="w-full justify-center" />
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="flex w-full items-center justify-center gap-2 rounded-full px-3 py-2.5 text-sm text-secondary transition-colors hover:bg-elevated hover:text-primary"
+              >
+                <LogOut className="h-4 w-4" strokeWidth={1.5} />
+                {t.common.signOut}
+              </button>
+            </div>
+          </div>
+        </Drawer>
+
+        <main
+          className={cn(
+            "mx-auto w-full min-w-0 max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-8 lg:max-w-7xl lg:px-8",
+            "pb-[calc(1.5rem+env(safe-area-inset-bottom))] md:pb-8",
+          )}
+        >
           <div className="mb-6 flex items-center gap-2 text-xs text-tertiary">
             <Building2 className="h-3.5 w-3.5" strokeWidth={1.5} />
             <span>
@@ -145,31 +147,6 @@ export function AppShell({
           </div>
           {children}
         </main>
-
-        <nav className="sticky bottom-0 border-t border-subtle bg-base/60 backdrop-blur-md md:hidden">
-          <div className="flex items-center justify-around px-1 py-2">
-            {APP_NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.href;
-
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "flex min-w-0 flex-1 flex-col items-center gap-1 rounded-lg px-1 py-2 text-[10px] transition-colors",
-                    isActive
-                      ? "text-primary"
-                      : "text-tertiary hover:text-secondary",
-                  )}
-                >
-                  <Icon className="h-4 w-4 shrink-0" strokeWidth={1.5} />
-                  <span className="truncate">{t.nav[item.labelKey]}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </nav>
       </div>
     </div>
   );

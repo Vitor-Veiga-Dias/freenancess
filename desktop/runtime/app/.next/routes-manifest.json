@@ -1,0 +1,234 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [
+    {
+      "page": "/api/auth/[...all]",
+      "regex": "^/api/auth/(.+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPall": "nxtPall"
+      },
+      "namedRegex": "^/api/auth/(?<nxtPall>.+?)(?:/)?$"
+    },
+    {
+      "page": "/api/budgets/[id]",
+      "regex": "^/api/budgets/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/budgets/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/entries/[id]",
+      "regex": "^/api/entries/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/entries/(?<nxtPid>[^/]+?)(?:/)?$"
+    },
+    {
+      "page": "/api/transactions/[id]",
+      "regex": "^/api/transactions/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPid": "nxtPid"
+      },
+      "namedRegex": "^/api/transactions/(?<nxtPid>[^/]+?)(?:/)?$"
+    }
+  ],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/budgets",
+      "regex": "^/api/budgets(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/budgets(?:/)?$"
+    },
+    {
+      "page": "/api/context",
+      "regex": "^/api/context(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/context(?:/)?$"
+    },
+    {
+      "page": "/api/cron/sync",
+      "regex": "^/api/cron/sync(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/cron/sync(?:/)?$"
+    },
+    {
+      "page": "/api/entries",
+      "regex": "^/api/entries(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/entries(?:/)?$"
+    },
+    {
+      "page": "/api/health",
+      "regex": "^/api/health(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/health(?:/)?$"
+    },
+    {
+      "page": "/api/locale",
+      "regex": "^/api/locale(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/locale(?:/)?$"
+    },
+    {
+      "page": "/api/open-finance/connect",
+      "regex": "^/api/open\\-finance/connect(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/open\\-finance/connect(?:/)?$"
+    },
+    {
+      "page": "/api/open-finance/revoke",
+      "regex": "^/api/open\\-finance/revoke(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/open\\-finance/revoke(?:/)?$"
+    },
+    {
+      "page": "/api/webhooks/pluggy",
+      "regex": "^/api/webhooks/pluggy(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/webhooks/pluggy(?:/)?$"
+    },
+    {
+      "page": "/apple-icon.png",
+      "regex": "^/apple\\-icon\\.png(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/apple\\-icon\\.png(?:/)?$"
+    },
+    {
+      "page": "/budgets",
+      "regex": "^/budgets(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/budgets(?:/)?$"
+    },
+    {
+      "page": "/business",
+      "regex": "^/business(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/business(?:/)?$"
+    },
+    {
+      "page": "/connections",
+      "regex": "^/connections(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/connections(?:/)?$"
+    },
+    {
+      "page": "/entries",
+      "regex": "^/entries(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/entries(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/feed",
+      "regex": "^/feed(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/feed(?:/)?$"
+    },
+    {
+      "page": "/flows",
+      "regex": "^/flows(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/flows(?:/)?$"
+    },
+    {
+      "page": "/icon.png",
+      "regex": "^/icon\\.png(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/icon\\.png(?:/)?$"
+    },
+    {
+      "page": "/login",
+      "regex": "^/login(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/login(?:/)?$"
+    },
+    {
+      "page": "/overview",
+      "regex": "^/overview(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/overview(?:/)?$"
+    },
+    {
+      "page": "/personal",
+      "regex": "^/personal(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/personal(?:/)?$"
+    },
+    {
+      "page": "/register",
+      "regex": "^/register(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/register(?:/)?$"
+    },
+    {
+      "page": "/sandbox",
+      "regex": "^/sandbox(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/sandbox(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}

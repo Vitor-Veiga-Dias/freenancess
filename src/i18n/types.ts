@@ -18,6 +18,9 @@ export type Dictionary = {
     save: string;
     expense: string;
     income: string;
+    menu: string;
+    close: string;
+    filters: string;
   };
   language: {
     label: string;
@@ -29,6 +32,12 @@ export type Dictionary = {
     overviewDescription: string;
     entries: string;
     entriesDescription: string;
+    budgets: string;
+    budgetsDescription: string;
+    feed: string;
+    feedDescription: string;
+    connections: string;
+    connectionsDescription: string;
     viewingContext: string;
   };
   marketing: {
@@ -60,12 +69,26 @@ export type Dictionary = {
     totalExpenses: string;
     totalIncome: string;
     balance: string;
+    investments: string;
     expensesByCategory: string;
     incomeByCategory: string;
     emptyExpenses: string;
     emptyIncome: string;
     emptyAll: string;
     addEntry: string;
+    monthlyTrend: string;
+    transactionCount: string;
+    topExpenseCategory: string;
+    topExpense: string;
+    fromBank: string;
+    fromManual: string;
+    chartSpent: string;
+    chartBudget: string;
+    chartOfBudget: string;
+    chartOfTotal: string;
+    chartOverBudget: string;
+    chartLegendSpent: string;
+    chartLegendBudget: string;
   };
   entries: {
     title: string;
@@ -86,6 +109,34 @@ export type Dictionary = {
     deleteFailed: string;
     createFailed: string;
     updateFailed: string;
+    paymentMode: string;
+    cash: string;
+    credit: string;
+    counterparty: string;
+    counterpartyHint: string;
+    installmentNumber: string;
+    installmentTotal: string;
+    recurring: string;
+    recurringBadge: string;
+    installmentBadge: string;
+    fundedByIncome: string;
+    fundedByIncomeHint: string;
+    fundedByIncomeNone: string;
+    fundedByIncomeBadge: string;
+    filters: {
+      type: string;
+      category: string;
+      recurring: string;
+      dateFrom: string;
+      dateTo: string;
+      allTypes: string;
+      allCategories: string;
+      allRecurring: string;
+      recurringOnly: string;
+      nonRecurringOnly: string;
+      resultsCount: string;
+      showingPage: string;
+    };
     categories: {
       housing: string;
       food: string;
@@ -127,6 +178,35 @@ export type Dictionary = {
     stubMessage: string;
     pluggyMessage: string;
     scopes: string;
+    revoke: string;
+    revoking: string;
+    revokeFailed: string;
+    revokeConfirm: string;
+  };
+  budgets: {
+    title: string;
+    subtitle: string;
+    category: string;
+    limit: string;
+    spent: string;
+    remaining: string;
+    progress: string;
+    add: string;
+    save: string;
+    empty: string;
+    overBudget: string;
+    nearLimit: string;
+    month: string;
+    createFailed: string;
+    updateFailed: string;
+    deleteFailed: string;
+  };
+  transactions: {
+    classify: string;
+    unclassified: string;
+    classifyTitle: string;
+    classifyFailed: string;
+    saveClassification: string;
   };
   sandbox: {
     title: string;

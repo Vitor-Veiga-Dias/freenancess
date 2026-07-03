@@ -59,7 +59,7 @@ export function EntryList({
         return (
           <Card
             key={entry.id}
-            className={`flex items-center justify-between gap-4 p-4 ${
+            className={`flex items-center justify-between gap-4 rounded-2xl p-4 md:rounded-lg ${
               isEditing ? "border-accent/40" : ""
             }`}
           >
@@ -71,9 +71,38 @@ export function EntryList({
                 <Badge variant={entry.type === "CREDIT" ? "success" : "default"}>
                   {getCategoryLabel(t, entry.category as EntryCategory)}
                 </Badge>
+                {entry.paymentMode === "CREDIT" &&
+                  entry.installmentNumber !== null &&
+                  entry.installmentTotal !== null && (
+                    <Badge variant="warning">
+                      {t.entries.installmentBadge
+                        .replace("{current}", String(entry.installmentNumber))
+                        .replace("{total}", String(entry.installmentTotal))}
+                    </Badge>
+                  )}
+                {entry.paymentMode === "CREDIT" &&
+                  (entry.installmentNumber === null ||
+                    entry.installmentTotal === null) && (
+                    <Badge variant="warning">{t.entries.credit}</Badge>
+                  )}
+                {entry.isRecurring && (
+                  <Badge variant="default">{t.entries.recurringBadge}</Badge>
+                )}
+                {entry.fundedByIncomeCategory && (
+                  <Badge variant="default">
+                    {t.entries.fundedByIncomeBadge.replace(
+                      "{category}",
+                      getCategoryLabel(
+                        t,
+                        entry.fundedByIncomeCategory as EntryCategory,
+                      ),
+                    )}
+                  </Badge>
+                )}
               </div>
               <p className="text-xs text-tertiary">
                 {new Date(entry.postedAt).toLocaleDateString(intlLocale)}
+                {entry.counterparty ? ` · ${entry.counterparty}` : ""}
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -95,6 +124,12 @@ export function EntryList({
                     amount: entry.amount,
                     description: entry.description,
                     postedAt: entry.postedAt,
+                    paymentMode: entry.paymentMode,
+                    installmentNumber: entry.installmentNumber,
+                    installmentTotal: entry.installmentTotal,
+                    isRecurring: entry.isRecurring,
+                    counterparty: entry.counterparty,
+                    fundedByIncomeCategory: entry.fundedByIncomeCategory,
                   })
                 }
                 disabled={isEditing}

@@ -3,6 +3,7 @@
 import Link from "next/link";
 
 import { useI18n } from "@/i18n/context";
+import { BrandLogo } from "@/ui/patterns/brand-logo";
 import { LanguageSwitcher } from "@/ui/patterns/language-switcher";
 import { Button } from "@/ui/primitives/button";
 
@@ -12,7 +13,7 @@ export function MarketingPageContent() {
   return (
     <div className="flex min-h-screen flex-col bg-base">
       <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-6 py-6">
-        <span className="text-sm font-semibold tracking-tight">freenances</span>
+        <BrandLogo href="/" size="md" />
         <div className="flex items-center gap-3">
           <LanguageSwitcher />
           <Link href="/login">

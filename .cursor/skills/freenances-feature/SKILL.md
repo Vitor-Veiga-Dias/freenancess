@@ -62,8 +62,7 @@ If feature is PF or PJ specific:
 ## 8. Verify locally
 
 ```bash
-docker start freenances-db    # if stopped
-npx prisma db push            # if schema changed
+npx prisma db push            # if schema changed (Railway Postgres)
 npm run dev
 ```
 

@@ -2,6 +2,7 @@ import type { ContextType } from "@/domain/context/types";
 import { buildMoneyFlows, MONEY_FLOW_TYPES } from "@/domain/flows/types";
 import { toNarrativeFeedItem } from "@/domain/insights/types";
 import { signedAmount } from "@/domain/ledger/types";
+import { listUnclassifiedTransactions } from "@/application/use-cases/classify-transaction";
 import { requireSession } from "@/infrastructure/auth/session";
 import { prisma } from "@/infrastructure/db/prisma";
 import { localeToIntl } from "@/i18n/config";
@@ -11,6 +12,8 @@ import { translateMoneyFlows } from "@/i18n/translate-flows";
 import { FlowBar } from "@/ui/patterns/flow-bar";
 import { NarrativeCard } from "@/ui/patterns/narrative-card";
 import { formatCurrency } from "@/ui/tokens/cn";
+
+import { UnclassifiedTransactions } from "./unclassified-transactions";
 
 async function getFeedData(userId: string, contextType: ContextType) {
   const [events, accounts, transactions] = await Promise.all([
@@ -63,10 +66,10 @@ export default async function FeedPage() {
   const t = getDictionary(locale);
   const intlLocale = localeToIntl(locale);
 
-  const { balance, flows, events } = await getFeedData(
-    session.user.id,
-    contextType,
-  );
+  const [{ balance, flows, events }, unclassified] = await Promise.all([
+    getFeedData(session.user.id, contextType),
+    listUnclassifiedTransactions(session.user.id, contextType),
+  ]);
 
   const translatedFlows = translateMoneyFlows(flows, t);
   const contextLabel =
@@ -118,6 +121,12 @@ export default async function FeedPage() {
           intlLocale={intlLocale}
         />
       </section>
+
+      <UnclassifiedTransactions
+        transactions={unclassified}
+        contextType={contextType}
+        intlLocale={intlLocale}
+      />
 
       <section className="space-y-4">
         <p className="text-xs font-medium uppercase tracking-widest text-secondary">

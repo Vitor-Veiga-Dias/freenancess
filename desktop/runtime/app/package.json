@@ -1,0 +1,67 @@
+{
+  "name": "freenances",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  },
+  "overrides": {
+    "@emnapi/core": "1.11.1",
+    "@emnapi/runtime": "1.11.1"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "prisma generate && next build",
+    "start": "node .next/standalone/server.js",
+    "lint": "eslint",
+    "db:generate": "prisma generate && npm run desktop:generate",
+    "db:push": "prisma db push",
+    "db:deploy": "prisma db push --skip-generate --accept-data-loss",
+    "db:studio": "prisma studio",
+    "db:migrate-aiven": "npx tsx scripts/migrate-to-aiven.ts",
+    "db:up": "docker compose up -d db",
+    "db:down": "docker compose down",
+    "db:logs": "docker compose logs -f db",
+    "desktop:bundle": "node scripts/prepare-desktop-runtime.mjs",
+    "desktop:stop": "node scripts/stop-desktop.mjs",
+    "desktop:prod": "node scripts/run-desktop-production.mjs",
+    "desktop:build:exe": "node scripts/build-desktop-exe.mjs",
+    "desktop:package": "node scripts/package-desktop-portable.mjs",
+    "icons:generate": "node scripts/generate-brand-icons.mjs",
+    "desktop:generate": "prisma generate --schema=prisma/schema.sqlite.prisma",
+    "desktop:push": "node scripts/with-desktop-env.mjs npx prisma db push --schema=prisma/schema.sqlite.prisma",
+    "desktop:build": "node scripts/with-desktop-env.mjs npx next build",
+    "desktop:serve": "node scripts/with-desktop-env.mjs npx next dev -p 3847",
+    "desktop:start:server": "node scripts/with-desktop-env.mjs npx next start -p 3847",
+    "desktop:prepare": "npm run db:push",
+    "desktop:migrate-data": "npm run db:migrate-aiven",
+    "desktop:dev": "npm run desktop:prepare && npm run desktop:serve",
+    "desktop:run": "npm run desktop:bundle && npm run desktop:prod",
+    "desktop:start": "powershell -ExecutionPolicy Bypass -File scripts/start-desktop.ps1",
+    "desktop:app": "npm run dev --prefix desktop",
+    "desktop:install": "npm install --prefix desktop"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.3",
+    "@tanstack/react-query": "^5.101.1",
+    "better-auth": "^1.6.20",
+    "lucide-react": "^1.21.0",
+    "next": "16.2.9",
+    "prisma": "^6.19.3",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "20.19.43",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "sharp": "^0.35.3",
+    "tailwindcss": "^4",
+    "tsx": "^4.20.3",
+    "typescript": "^5"
+  }
+}
